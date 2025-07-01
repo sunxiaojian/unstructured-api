@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:experimental
-FROM quay.io/unstructured-io/base-images:wolfi-base-latest as base
+FROM --platform=linux/amd64 quay.io/unstructured-io/base-images:wolfi-base-latest as base
 
 # NOTE(crag): NB_USER ARG for mybinder.org compat:
 #             https://mybinder.readthedocs.io/en/latest/tutorials/dockerfile.html
@@ -21,12 +21,21 @@ ENV PATH="/home/${NB_USER}/.local/bin:${PATH}"
 
 FROM base as python-deps
 COPY --chown=${NB_USER}:${NB_USER} requirements/base.txt requirements-base.txt
+COPY --chown=${NB_USER}:${NB_USER} requirements/wheels wheels
 RUN ${PIP} install pip==${PIP_VERSION}
 RUN ${PIP} install --no-cache -r requirements-base.txt
 
 FROM python-deps as model-deps
-RUN ${PYTHON} -c "from unstructured.nlp.tokenize import download_nltk_packages; download_nltk_packages()" && \
-  ${PYTHON} -c "from unstructured.partition.model_init import initialize; initialize()"
+ENV HF_ENDPOINT=https://hf-mirror.com
+RUN ${PYTHON} -c "from unstructured.nlp.tokenize import download_nltk_packages; download_nltk_packages()"
+RUN $PYTHON -c "from unstructured.partition.model_init import initialize; initialize()"
+RUN $PYTHON -c "from unstructured_inference.models.tables import UnstructuredTableTransformerModel; model = UnstructuredTableTransformerModel(); model.initialize('microsoft/table-transformer-structure-recognition')"
+
+## Load in the model for sentence_transformers chunking.
+RUN $PYTHON -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-mpnet-base-v2')"
+RUN $PYTHON -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+## Load in the model for spacy chunking.
+RUN ${PYTHON} -m spacy download en_core_web_sm
 
 FROM model-deps as code
 COPY --chown=${NB_USER}:${NB_USER} CHANGELOG.md CHANGELOG.md

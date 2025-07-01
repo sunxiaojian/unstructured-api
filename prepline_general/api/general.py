@@ -241,6 +241,8 @@ def pipeline_api(
     unique_element_ids: Optional[bool] = False,
     starting_page_number: Optional[int] = None,
     include_slide_notes: Optional[bool] = True,
+    ## -- chunking by_langchain options --
+    splitter_kwargs: dict[str, Any] = {}
 ) -> List[Dict[str, Any]] | str:
     if filename.endswith(".msg"):
         # Note(yuming): convert file type for msg files
@@ -373,6 +375,7 @@ def pipeline_api(
             "unique_element_ids": unique_element_ids,
             "starting_page_number": starting_page_number,
             "include_slide_notes": include_slide_notes,
+            **splitter_kwargs,
         }
 
         if file_content_type == "application/pdf" and pdf_parallel_mode_enabled:
@@ -523,7 +526,22 @@ def _validate_chunking_strategy(chunking_strategy: Optional[str]) -> Optional[st
         return None
 
     chunking_strategy = chunking_strategy.lower()
-    available_strategies = ["basic", "by_title"]
+    available_strategies = [
+        "basic",
+        "by_title",
+        ## by langchain
+        "character",
+        "recursive",
+        "token",
+        "markdown",
+        "python",
+        "latex",
+        "nltk",
+        "spacy",
+        "html_header",
+        "sentence_transformers",
+        "language"
+    ]
 
     if chunking_strategy not in available_strategies:
         raise HTTPException(
@@ -718,6 +736,7 @@ def general_partition(
                 overlap_all=form_params.overlap_all,
                 starting_page_number=form_params.starting_page_number,
                 include_slide_notes=form_params.include_slide_notes,
+                splitter_kwargs=form_params.splitter_kwargs,
             )
 
             yield (

@@ -6,3 +6,5 @@
 numpy<2.0.0
 # later versions of Starlette break middleware
 starlette==0.41.2
+# later versions of fastapi break middleware
+onnxruntime==1.19.0
