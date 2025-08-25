@@ -365,7 +365,13 @@ def pipeline_api(
             "languages": languages,
             "chunking_strategy": chunking_strategy,
             "multipage_sections": multipage_sections,
-            "combine_text_under_n_chars": combine_under_n_chars,
+            "combine_text_under_n_chars": (
+                int(combine_under_n_chars) 
+                if isinstance(combine_under_n_chars, str) and combine_under_n_chars.strip().lstrip('-').isdigit()
+                else combine_under_n_chars 
+                if isinstance(combine_under_n_chars, int)
+                else None
+            ),
             "new_after_n_chars": new_after_n_chars,
             "max_characters": max_characters,
             "overlap": overlap,
