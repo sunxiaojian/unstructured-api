@@ -350,6 +350,20 @@ def pipeline_api(
             )
         )
 
+        # Log the type and value of combine_under_n_chars for debugging
+        logger.debug(f"combine_under_n_chars type: {type(combine_under_n_chars)}, value: {combine_under_n_chars}")
+        
+        # Process combine_under_n_chars to ensure it's an integer
+        processed_combine_under_n_chars = (
+            int(combine_under_n_chars)
+            if isinstance(combine_under_n_chars, str) and combine_under_n_chars.strip().lstrip('-').isdigit()
+            else combine_under_n_chars
+            if isinstance(combine_under_n_chars, int)
+            else 500  # Default value when None or invalid
+        )
+        
+        logger.debug(f"processed_combine_under_n_chars type: {type(processed_combine_under_n_chars)}, value: {processed_combine_under_n_chars}")
+
         partition_kwargs = {
             "file": file,
             "metadata_filename": filename,
@@ -365,13 +379,7 @@ def pipeline_api(
             "languages": languages,
             "chunking_strategy": chunking_strategy,
             "multipage_sections": multipage_sections,
-            "combine_text_under_n_chars": (
-                int(combine_under_n_chars) 
-                if isinstance(combine_under_n_chars, str) and combine_under_n_chars.strip().lstrip('-').isdigit()
-                else combine_under_n_chars 
-                if isinstance(combine_under_n_chars, int)
-                else None
-            ),
+            "combine_text_under_n_chars": processed_combine_under_n_chars,
             "new_after_n_chars": new_after_n_chars,
             "max_characters": max_characters,
             "overlap": overlap,
@@ -383,6 +391,8 @@ def pipeline_api(
             "include_slide_notes": include_slide_notes,
             **splitter_kwargs,
         }
+
+        logger.debug(f"partition_kwargs: {partition_kwargs}")
 
         if file_content_type == "application/pdf" and pdf_parallel_mode_enabled:
             pdf = PdfReader(file)
