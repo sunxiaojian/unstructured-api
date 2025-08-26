@@ -289,7 +289,7 @@ class GeneralFormParams(BaseModel):
         # Process dynamic parameters
         for key, value in form_data.items():
             # Skip known parameters and special keys
-            if key in known_params or key in ["files", "__len__"]:
+            if key in known_params or key in ["files", "__len__", "combine_text_under_n_chars"]:
                 continue
 
             # Parse value using SmartValueParser
